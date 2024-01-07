@@ -58,8 +58,9 @@ def score_display(game_state):
 
 def check_score(score,high_score):
     if score > high_score:
-        high_score = score
-    return high_score
+        return score
+    else:
+        return high_score
 
 pygame.mixer.pre_init(frequency = 44100, size = 16, channels = 1,buffer = 512)
 pygame.init()
@@ -68,7 +69,7 @@ clock = pygame.time.Clock()
 game_font = pygame.font.Font('04B_19.TTF',40)
 
 # Game Variables
-gravity = 0.25
+gravity = 0.20
 bird_movement = 0
 game_active = True
 score = 0
@@ -151,7 +152,7 @@ while True:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 bird_movement = 0
-                bird_movement -= 10
+                bird_movement -= 8
                 flap_sound.play()
             if event.key == pygame.K_SPACE and game_active == False:
                 game_active = True
@@ -185,6 +186,7 @@ while True:
         pipe_list = move_pipe(pipe_list)
         draw_pipes(pipe_list)
         score += 0.007
+        high_score = check_score(score,high_score)
         score_display('main_game')
         score_sound_countdown -= 1
         if score_sound_countdown <= 0:
@@ -192,7 +194,7 @@ while True:
             score_sound_countdown = 142
     else:
         screen.blit(game_over_surface,game_over_rect)
-        high_score = check_score(score,high_score)
+        # high_score = check_score(score,high_score)
         score_display('game_over')
 
     # Floor
