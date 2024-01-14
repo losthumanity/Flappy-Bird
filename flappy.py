@@ -13,7 +13,8 @@ def create_pipe():
 def move_pipe(pipes):
     for pipe in pipes:
         pipe.centerx -= 4.5
-    return pipes
+    visible_pipes = [pipe for pipe in pipes if pipe.right > -50]
+    return visible_pipes
 
 def draw_pipes(pipes):
     for pipe in pipes:
@@ -24,11 +25,14 @@ def draw_pipes(pipes):
             screen.blit(flip_pipe,pipe)
         
 def check_collsion(pipes):
+    global can_score
     for pipe in pipes:
         if bird_rect.colliderect(pipe):
             death_sound.play()
+            can_score = True
             return False
     if bird_rect.top <= -100 or bird_rect.bottom >= 750:
+        can_score = True
         death_sound.play()
         return False
     return True
@@ -44,15 +48,15 @@ def animate_bird():
 
 def score_display(game_state):
     if game_state == "main_game":
-        score_surface = game_font.render((str(int(score))),True,(255,255,255))
+        score_surface = game_font.render((str(int(score/4))),True,(255,255,255))
         score_rect = score_surface.get_rect(center = (225, 90))
         screen.blit(score_surface,score_rect)
     if game_state == 'game_over':
-        score_surface = game_font.render((f'Score: {(int(score))}'),True,(255,255,255))
+        score_surface = game_font.render((f'Score: {(int(score/4))}'),True,(255,255,255))
         score_rect = score_surface.get_rect(center = (225, 90))
         screen.blit(score_surface,score_rect)
 
-        high_score_surface = game_font.render((f'High Score: {(int(score))}'),True,(255,255,255))
+        high_score_surface = game_font.render((f'High Score: {(int(high_score/4))}'),True,(255,255,255))
         high_score_rect = high_score_surface.get_rect(center = (225, 650))
         screen.blit(high_score_surface,high_score_rect)
 
@@ -62,7 +66,18 @@ def check_score(score,high_score):
     else:
         return high_score
 
-pygame.mixer.pre_init(frequency = 44100, size = 16, channels = 1,buffer = 512)
+def pipe_score_check():
+    global score,can_score
+    if pipe_list:
+        for pipe in pipe_list:
+            if 95 < pipe.centerx < 105:
+                score += 1
+                score_sound.play()
+                can_score = False
+            elif pipe.centerx < 0:
+                can_score = True
+
+#pygame.mixer.pre_init(frequency = 44100, size = 16, channels = 1,buffer = 512)
 pygame.init()
 screen = pygame.display.set_mode((450,800))
 clock = pygame.time.Clock()
@@ -74,8 +89,9 @@ bird_movement = 0
 game_active = True
 score = 0
 high_score = 0
+can_score = True
 
-bg_surface = pygame.image.load('assets/background-day.png').convert()
+bg_surface = pygame.image.load('assets/background-night.png').convert()
 scaled_factor = 1.5625
 bg_surface = pygame.transform.scale(bg_surface, (
     int(bg_surface.get_width() * scaled_factor),
@@ -121,7 +137,7 @@ pygame.time.set_timer(BIRDFLAP,200)
 #                                                      int(bird_surface.get_height() * scaled_factor)))
 # bird_rect = bird_surface.get_rect(center = (90,400))
 
-pipe_surface = pygame.image.load('assets/pipe-green.png')
+pipe_surface = pygame.image.load('assets/pipe-red.png')
 pipe_surface = pygame.transform.scale(pipe_surface, (
     int(pipe_surface.get_width() * scaled_factor),
     int(pipe_surface.get_height() * scaled_factor)
@@ -185,13 +201,10 @@ while True:
         # Pipes
         pipe_list = move_pipe(pipe_list)
         draw_pipes(pipe_list)
-        score += 0.007
+        
+        pipe_score_check()
         high_score = check_score(score,high_score)
         score_display('main_game')
-        score_sound_countdown -= 1
-        if score_sound_countdown <= 0:
-            score_sound.play()
-            score_sound_countdown = 142
     else:
         screen.blit(game_over_surface,game_over_rect)
         # high_score = check_score(score,high_score)
